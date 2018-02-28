@@ -298,16 +298,30 @@ class ProgramConfiguration {
             const name = paintAttributeName(property, layer.type);
             const type = value.property.specification.type;
             const useIntegerZoom = value.property.useIntegerZoom;
-
-            if (value.value.kind === 'constant') {
-                self.binders[property] = new ConstantBinder(value.value, name, type);
-                keys.push(`/u_${name}`);
-            } else if (value.value.kind === 'source') {
-                self.binders[property] = new SourceExpressionBinder(value.value, name, type);
-                keys.push(`/a_${name}`);
+            if (Array.isArray(name)) {
+                name.forEach((n) => {
+                    if (value.value.kind === 'constant') {
+                        self.binders[property + '_' + n] = new ConstantBinder(value.value, n, type);
+                        keys.push(`/u_${n}`);
+                    } else if (value.value.kind === 'source') {
+                        self.binders[property + '_' + n] = new SourceExpressionBinder(value.value, n, type);
+                        keys.push(`/a_${n}`);
+                    } else {
+                        self.binders[property + '_' + n] = new CompositeExpressionBinder(value.value, n, type, useIntegerZoom, zoom);
+                        keys.push(`/z_${n}`);
+                    }
+                })
             } else {
-                self.binders[property] = new CompositeExpressionBinder(value.value, name, type, useIntegerZoom, zoom);
-                keys.push(`/z_${name}`);
+                if (value.value.kind === 'constant') {
+                    self.binders[property] = new ConstantBinder(value.value, name, type);
+                    keys.push(`/u_${name}`);
+                } else if (value.value.kind === 'source') {
+                    self.binders[property] = new SourceExpressionBinder(value.value, name, type);
+                    keys.push(`/a_${name}`);
+                } else {
+                    self.binders[property] = new CompositeExpressionBinder(value.value, name, type, useIntegerZoom, zoom);
+                    keys.push(`/z_${name}`);
+                }
             }
         }
 
@@ -333,6 +347,11 @@ class ProgramConfiguration {
     setUniforms<Properties: Object>(context: Context, program: Program, properties: PossiblyEvaluated<Properties>, globals: GlobalProperties) {
         for (const property in this.binders) {
             const binder = this.binders[property];
+
+            // patterns require more state than the binders currently manage, and more than one
+            // uniform vector, so we manage the uniform bindings in the main render code.
+            if (property.match(/pattern/)) continue;
+
             binder.setUniforms(context, program, globals, properties.get(property));
         }
     }
@@ -413,7 +432,8 @@ function paintAttributeName(property, type) {
         'icon-halo-blur': 'halo_blur',
         'text-halo-width': 'halo_width',
         'icon-halo-width': 'halo_width',
-        'line-gap-width': 'gapwidth'
+        'line-gap-width': 'gapwidth',
+        'line-pattern': ['pattern_a', 'pattern_b', 'pattern_size']
     };
     return attributeNameExceptions[property] ||
         property.replace(`${type}-`, '').replace(/-/g, '_');
