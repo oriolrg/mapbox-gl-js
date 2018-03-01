@@ -9,10 +9,10 @@ const lineLayoutAttributes = createLayout([
 // todo: pack these attributes tighter
 const dynamicLineAttributes = createLayout([
     // [tl.x, tl.y, br.x, br.y]
-    {name: 'a_image_a',  components: 4, type: 'Uint16'},
-    {name: 'a_image_b',  components: 4, type: 'Uint16'},
-    // [image_a.h, image_a.w, image_b.h, image_b.w]
-    {name: 'a_image_sizes', components: 4, type: 'Uint16'}
+    {name: 'a_pattern_a',  components: 4, type: 'Uint16'},
+    {name: 'a_pattern_b',  components: 4, type: 'Uint16'},
+    // [pattern_a.h, pattern_a.w, pattern_b.h, pattern_b.w]
+    {name: 'a_pattern_size', components: 4, type: 'Uint16'}
 ]);
 
 module.exports = {lineLayoutAttributes, dynamicLineAttributes};
