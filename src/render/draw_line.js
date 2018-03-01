@@ -53,7 +53,7 @@ function drawLineTile(program, painter, tile, bucket, layer, coord, programConfi
     const gl = context.gl;
     const dasharray = layer.paint.get('line-dasharray');
     const linePattern = layer.paint.get('line-pattern');
-    const image = linePattern && linePattern.evaluate();
+    const image = linePattern && (linePattern.value.kind === "constant" || linePattern.value.kind === "camera" ) ? linePattern.value.value : undefined;
 
     let posA, posB, imagePosA, imagePosB;
 
@@ -80,13 +80,15 @@ function drawLineTile(program, painter, tile, bucket, layer, coord, programConfi
 
             const {width, height} = painter.imageManager.getPixelSize();
             gl.uniform2fv(program.uniforms.u_texsize, [width, height]);
+        } else if (bucket.dataDrivenPattern) {
+            const size = tile.iconAtlasTexture.size;
+            gl.uniform2fv(program.uniforms.u_texsize, size);
         }
 
         gl.uniform2f(program.uniforms.u_gl_units_to_pixels, 1 / painter.transform.pixelsToGLUnits[0], 1 / painter.transform.pixelsToGLUnits[1]);
     }
 
     if (programChanged) {
-
         if (dasharray) {
             gl.uniform1i(program.uniforms.u_image, 0);
             context.activeTexture.set(gl.TEXTURE0);
@@ -103,6 +105,12 @@ function drawLineTile(program, painter, tile, bucket, layer, coord, programConfi
             gl.uniform4fv(program.uniforms.u_pattern_a, (imagePosA: any).tl.concat((imagePosA: any).br));
             gl.uniform4fv(program.uniforms.u_pattern_b, (imagePosB: any).tl.concat((imagePosB: any).br));
             gl.uniform1f(program.uniforms.u_fade, image.t);
+        } else if (bucket.dataDrivenPattern) {
+            gl.uniform1i(program.uniforms.u_image, 0);
+            context.activeTexture.set(gl.TEXTURE0);
+            tile.iconAtlasTexture.bind(gl.NEAREST, gl.CLAMP_TO_EDGE);
+            gl.uniform1f(program.uniforms.u_fade, 1);
+
         }
     }
 
@@ -120,5 +128,6 @@ function drawLineTile(program, painter, tile, bucket, layer, coord, programConfi
         bucket.layoutVertexBuffer,
         bucket.indexBuffer,
         bucket.segments,
-        programConfiguration);
+        programConfiguration,
+        bucket.dynamicLineAttributeBuffer);
 }
