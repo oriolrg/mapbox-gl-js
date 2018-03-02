@@ -18,7 +18,7 @@ const production = process.env.BUILD === 'production';
 
 export const plugins = () => [
     sourcemaps(),
-    flow(), // setting {pretty: true} works around https://github.com/leebyron/rollup-plugin-flow/issues/5
+    flow(),
     minifyStyleSpec(),
     json(),
     buble({transforms: {dangerousForOf: true}, objectAssign: "Object.assign"}),
